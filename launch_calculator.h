@@ -28,6 +28,8 @@ void    start_stage(struct Vessel *v, struct Flight *f);
 void    update_vessel(struct Vessel *v, double t, double p, double h);
 // update parameters of the flight for the point in time t of the flight
 void    update_flight(struct Vessel *v, struct Vessel *last_v, struct Flight *f, struct Flight *last_f, double t, double step);
+// update position and horizontal and vertical speed
+void    calc_pos_in_orbit(struct Flight *f);
 
 // get atmospheric pressure p at height h with the scale height of the parent body
 double  get_atmo_press(double h, double scale_height);

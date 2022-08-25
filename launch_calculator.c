@@ -7,6 +7,7 @@
 #include "tool_funcs.h"
 #include "lv_profile.h"
 #include "celestial_bodies.h"
+#include "orbit.h"
 
 struct Vessel {
     double F_vac;       // Thrust produced by the engines in a vacuum [N]
@@ -24,6 +25,7 @@ struct Vessel {
 
 struct Flight {
     struct Body *body;
+    struct Orbit orbit;
     double t;       // time passed since t0 [s]
     double p;       // atmospheric pressure [Pa]
     double D;       // atmospheric Drag [N]
@@ -66,6 +68,7 @@ void init_vessel_next_stage(struct Vessel *vessel, double F_sl, double F_vac, do
 struct Flight init_flight(struct Body *body, double latitude) {
     struct Flight new_flight;
     new_flight.body = body;
+    new_flight.orbit = init_orbit(body);
     new_flight.t = 0;
     new_flight.vh_s = 0;
     // horizontal surface speed of body at equator -> circumference devided by rotational period [m/s]
@@ -242,7 +245,8 @@ void start_stage(struct Vessel *v, struct Flight *f) {
     f -> g   = calc_grav_acceleration(f);
     f -> ab  = calc_balanced_acceleration(f->g, f->ac);
     f -> av  = calc_vertical_acceleration(v->av, f->ab, f->ad, f->vv, f->v_s);
-    f -> Ap  = 0;
+    update_orbit_param(&f->orbit, f->r, f->vv, f->vh);
+    calc_pos_in_orbit(f);
 }
 
 
@@ -250,6 +254,7 @@ void update_flight(struct Vessel *v, struct Vessel *last_v, struct Flight *f, st
     f -> t   += step;
     f -> p    = get_atmo_press(f->h, f->body->scale_height);
     update_vessel(v, t, f->p, f->h);
+    calc_pos_in_orbit(f);
     f -> D    = calc_aerodynamic_drag(f->p, f->v_s);
     f -> ad   = f->D/v->mass;
     f -> ah   = calc_horizontal_acceleration(v->ah, f->ad, f->vh_s, f->v_s);
@@ -265,6 +270,14 @@ void update_flight(struct Vessel *v, struct Vessel *last_v, struct Flight *f, st
     f -> h   += integrate(f->vv,last_f->vv,step);    // integrate vertical speed
     f -> r    = f->h + f->body->radius;
     f -> s   += integrate(f->vh_s, last_f->vh_s, step);
+    update_orbit_param(&f->orbit, f->r, f->vv, f->vh);
+}
+
+void calc_pos_in_orbit(struct Flight *f) {
+    calc_true_anomaly(&f->orbit, f->r, f->vv);
+    f->vh = calc_horizontal_speed(&f->orbit, f->r, f->v);
+    f->vv = sqrt(pow(f->v, 2) - pow(f->vh, 2));
+    if(f->orbit.theta > M_PI) f->vv *= (-1);
 }
 
 
@@ -328,19 +341,6 @@ double calc_horizontal_acceleration(double horizontal_a_thrust, double drag_a,  
 
 double calc_velocity(double vh, double vv) {
     return sqrt(vv*vv+vh*vh);
-}
-
-struct Vector {
-    double x;
-    double y;
-};
-
-double vector_magnitude(struct Vector v) {
-    return sqrt(v.x*v.x + v.y*v.y);
-}
-
-double cross_product(struct Vector v1, struct Vector v2) {
-    return v1.x*v2.y - v1.y*v2.x;
 }
 
 double calc_Apoapsis(struct Flight f) {
