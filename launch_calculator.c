@@ -267,17 +267,12 @@ void update_flight(struct Vessel *v, struct Vessel *last_v, struct Flight *f, st
     f -> vv  += integrate(f->av,last_f->av,step);    // integrate vertical acceleration
     f -> v    = calc_velocity(f->vh,f->vv);
     f -> v_s  = calc_velocity(f->vh_s, f->vv);
+    double theta = atan(integrate(f->vh, last_f->vh, step)/f->r);
     f -> h   += integrate(f->vv,last_f->vv,step);    // integrate vertical speed
     f -> r    = f->h + f->body->radius;
     f -> s   += integrate(f->vh_s, last_f->vh_s, step);
-    update_orbit_param(&f->orbit, f->r, f->vv, f->vh);
-}
-
-void calc_pos_in_orbit(struct Flight *f) {
-    calc_true_anomaly(&f->orbit, f->r, f->vv);
-    f->vh = calc_horizontal_speed(&f->orbit, f->r, f->v);
-    f->vv = sqrt(pow(f->v, 2) - pow(f->vh, 2));
-    if(f->orbit.theta > M_PI) f->vv *= (-1);
+    // change of frame of reference (vv already changed due to ab)
+    f -> vh   = calc_change_of_reference_frame(f, last_f, step);
 }
 
 
@@ -341,6 +336,24 @@ double calc_horizontal_acceleration(double horizontal_a_thrust, double drag_a,  
 
 double calc_velocity(double vh, double vv) {
     return sqrt(vv*vv+vh*vh);
+}
+
+struct Vector {
+    double x;
+    double y;
+};
+
+double vector_magnitude(struct Vector v) {
+    return sqrt(v.x*v.x + v.y*v.y);
+}
+
+double cross_product(struct Vector v1, struct Vector v2) {
+    return v1.x*v2.y - v1.y*v2.x;
+}
+
+double calc_change_of_reference_frame(struct Flight *f, struct Flight *last_f, double step) {
+    double dx = integrate(f->vh, last_f->vh, step);
+    return (-1/f->r)*(dx*f->vv-sqrt(pow(f->r,2)-dx*dx)*f->vh);
 }
 
 double calc_Apoapsis(struct Flight f) {

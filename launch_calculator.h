@@ -53,6 +53,8 @@ double  calc_horizontal_acceleration(double horizontal_a_thrust, double drag_a, 
 // calculate overall velocity with given vertical and horizontal speed (pythagoras)
 double  calc_velocity(double vh, double vv);
 
+// calculate horizontal speed in new frame of reference
+double  calc_change_of_reference_frame(struct Flight *f, struct Flight *last_f, double step);
 // calculate current Apoapsis of flight/orbit
 double  calc_Apoapsis(struct Flight f);
 
