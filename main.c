@@ -6,6 +6,7 @@
 #include "gui/transfer_app.h"
 #include "gui/database_app.h"
 #include "database/database.h"
+#include "database/itin_db.h"
 
 
 // ------------------------------------------------------------
@@ -29,7 +30,9 @@ int main() {
             orbit_calculator();
             break;
         case 3:
+			init_itin_db();
 			create_itinerary();
+			close_itin_db();
             break;
 		case 4:
 			start_transfer_app();

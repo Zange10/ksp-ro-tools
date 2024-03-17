@@ -6,14 +6,14 @@
 
 sqlite3 *db;
 
-int execute_query(const char *query) {
+int execute_query(sqlite3 *query_db, const char *query) {
 	sqlite3_stmt *stmt;
 
-	int rc = sqlite3_prepare_v2(db, query, -1, &stmt, 0);
-	printf("%s\n", query);
+	int rc = sqlite3_prepare_v2(query_db, query, -1, &stmt, 0);
+//	printf("%s\n", query);
 	if (rc != SQLITE_OK) {
-		fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
-		sqlite3_close(db);
+		fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(query_db));
+		sqlite3_close(query_db);
 		return SQLITE_ERROR;
 	}
 
@@ -26,7 +26,7 @@ int db_new_program(const char *program_name, const char *vision) {
 	char query[500];
 	sprintf(query, "INSERT INTO Program (Name, Vision) "
 				   "VALUES ('%s', '%s');", program_name, vision);
-	if(execute_query(query) != SQLITE_OK) return -1;
+	if(execute_query(db, query) != SQLITE_OK) return -1;
 	return (int) sqlite3_last_insert_rowid(db);
 }
 
@@ -34,7 +34,7 @@ int db_new_mission(const char *mission_name, int program_id) {
 	char query[500];
 	sprintf(query, "INSERT INTO Mission (Name, ProgramID) "
 				   "VALUES ('%s', %d);", mission_name, program_id);
-	if(execute_query(query) != SQLITE_OK) return -1;
+	if(execute_query(db, query) != SQLITE_OK) return -1;
 	return (int) sqlite3_last_insert_rowid(db);
 }
 
@@ -42,7 +42,7 @@ int db_new_lv_family(const char *family_name) {
 	char query[500];
 	sprintf(query, "INSERT INTO LauncherFamily (Name) "
 				   "VALUES ('%s');", family_name);
-	if(execute_query(query) != SQLITE_OK) return -1;
+	if(execute_query(db, query) != SQLITE_OK) return -1;
 	return (int) sqlite3_last_insert_rowid(db);
 }
 
@@ -52,7 +52,7 @@ int db_new_lv(const char *lv_name, int family_id, double payload_diameter, doubl
 	sprintf(query, "INSERT INTO LV (Name, FamilyID, PayloadDiameter, A, c_d, LEO, SSO, GTO, TLI, TVI) "
 				   "VALUES ('%s', %d, %f, %f, %f, %f, %f, %f, %f, %f);",
 				   lv_name, family_id, payload_diameter, A, c_d, leo, sso, gto, tli, tvi);
-	if(execute_query(query) != SQLITE_OK) return -1;
+	if(execute_query(db, query) != SQLITE_OK) return -1;
 	return (int) sqlite3_last_insert_rowid(db);
 }
 

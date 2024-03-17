@@ -1,6 +1,8 @@
 #ifndef KSP_DATABASE_H
 #define KSP_DATABASE_H
 
+#include "sqlite3.h"
+
 enum MissionStatus {YET_TO_FLY, IN_PROGRESS, ENDED};
 enum VehicleStatus {ACTIVE, INACTIVE};
 
@@ -45,6 +47,7 @@ struct MissionProgram {
 
 
 void init_db();
+int execute_query(sqlite3 *query_db, const char *query);
 int db_get_missions(struct Mission **missions);
 struct LaunchVehicle db_get_lv_from_id(int id);
 struct FlyVehicle db_get_plane_from_id(int id);

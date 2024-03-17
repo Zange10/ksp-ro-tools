@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include "tools/thread_pool.h"
+#include "database/itin_db.h"
 
 void print_step(struct ItinStep *step) {
 	printf("%s\n", step->body->name);
@@ -163,7 +164,7 @@ void store_itineraries_in_file_init(struct ItinStep **departures, int num_nodes,
 	char filename[19];  // 14 for date + 4 for .csv + 1 for string terminator
 	sprintf(filename, "test.transfer");
 
-	printf("Filesize: ~%f.3 MB", (double)num_nodes*240/1e6);
+	printf("Filesize: ~%f.3 MB\n", (double)num_nodes*240/1e6);
 
 	FILE *file;
 	file = fopen(filename,"w");
@@ -282,29 +283,29 @@ void create_itinerary() {
 		get_body_ephem(ephems[i], i+1);
 	}
 
-	struct Body *bodies[] = {EARTH(), VENUS(), MARS(), EARTH()};
-	int num_steps = sizeof(bodies)/sizeof(struct Body*);
-
-	struct Date min_dep_date = {1958, 1, 1};
-	struct Date max_dep_date = {1963, 12, 31};
-	double jd_min_dep = convert_date_JD(min_dep_date);
-	double jd_max_dep = convert_date_JD(max_dep_date);
-	int num_deps = (int) (jd_max_dep-jd_min_dep+1);
-
-	int min_duration[] = {50, 100, 50};
-	int max_duration[] = {250, 500, 500};
-
-//	struct Body *bodies[] = {EARTH(), JUPITER(), SATURN(), URANUS(), NEPTUNE()};
+//	struct Body *bodies[] = {EARTH(), VENUS(), MARS(), EARTH()};
 //	int num_steps = sizeof(bodies)/sizeof(struct Body*);
 //
-//	struct Date min_dep_date = {1977, 5, 15};
-//	struct Date max_dep_date = {1977, 11, 21};
+//	struct Date min_dep_date = {1959, 6, 15};
+//	struct Date max_dep_date = {1959, 9, 31};
 //	double jd_min_dep = convert_date_JD(min_dep_date);
 //	double jd_max_dep = convert_date_JD(max_dep_date);
 //	int num_deps = (int) (jd_max_dep-jd_min_dep+1);
 //
-//	int min_duration[] = {500, 100, 300, 300};
-//	int max_duration[] = {1000, 3000, 3000, 3000};
+//	int min_duration[] = {50, 100, 50};
+//	int max_duration[] = {250, 500, 500};
+
+	struct Body *bodies[] = {EARTH(), JUPITER(), SATURN(), URANUS(), NEPTUNE()};
+	int num_steps = sizeof(bodies)/sizeof(struct Body*);
+
+	struct Date min_dep_date = {1975, 5, 15};
+	struct Date max_dep_date = {1979, 11, 21};
+	double jd_min_dep = convert_date_JD(min_dep_date);
+	double jd_max_dep = convert_date_JD(max_dep_date);
+	int num_deps = (int) (jd_max_dep-jd_min_dep+1);
+
+	int min_duration[] = {500, 100, 300, 300};
+	int max_duration[] = {1000, 3000, 3000, 3000};
 
 //	struct Body *bodies[] = {EARTH(), VENUS(), VENUS(), EARTH(), JUPITER(), SATURN()};
 //	int num_steps = sizeof(bodies)/sizeof(struct Body*);
@@ -403,7 +404,12 @@ void create_itinerary() {
 	print_itinerary(arrivals[mind]);
 	printf("  -  %f m/s\n", mindv);
 
-//	store_itineraries_in_file_init(departures, tot_num_itins, num_deps, num_steps);
+	store_itineraries_in_file_init(departures, tot_num_itins, num_deps, num_steps);
+
+	printf("file done\n");
+
+	store_itineraries_in_db(departures, num_deps, "Inner Voyage");
+
 
 	for(int i = 0; i < num_deps; i++) free_itinerary(departures[i]);
 	free(departures);
